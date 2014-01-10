@@ -11,6 +11,10 @@ function unload_driver {
     rmmod $MODULE
 }
 
+function reload_driver {
+    unload_driver
+    load_driver
+}
 
 
 
@@ -22,4 +26,8 @@ case $1 in
     unload)
         echo "unloading $MODULE"
         unload_driver;;
+    
+    reload)
+        echo "reloading $MODULE"
+        reload_driver;;
 esac

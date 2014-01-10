@@ -5,3 +5,10 @@ modules.order
 *.mod.c
 .tmp_versions
 Module.symvers
+
+# Visual Studio Project Files
+*.sln
+*.vcxproj*
+*.suo
+*.sdf
+*.opensdf
