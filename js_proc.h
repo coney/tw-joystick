@@ -10,7 +10,7 @@
 #define JS_PROC_NAME            "twjs"
 #define JS_PROC_BUFSIZE         2048
 
-int js_init_proc_entry(void);
-void js_clear_proc_entry(void);
+int js_proc_init(void);
+void js_proc_clear(void);
 
 #endif // __JS_PROC_H__

@@ -1,13 +1,12 @@
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
-#include <linux/module.h>
 #include <asm/uaccess.h>
-#include "js_log.h"
 
+#include "js_log.h"
 #include "js_proc.h"
 
-static struct proc_dir_entry *s_proc_entry = NULL;
-static char *s_proc_buffer = NULL;
+static struct proc_dir_entry *proc_entry = NULL;
+static char *proc_buffer = NULL;
 
 int js_proc_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
 {
@@ -36,49 +35,49 @@ int js_proc_write(struct file *file, const char *buffer, unsigned long count, vo
     }
 
     /* write data to the buffer */
-    if (copy_from_user(s_proc_buffer, buffer, count)) {
+    if (copy_from_user(proc_buffer, buffer, count)) {
         return -EFAULT;
     }
 
-    s_proc_buffer[JS_PROC_BUFSIZE - 1] = 0;
-    logdebug("%s\n", s_proc_buffer);
+    proc_buffer[JS_PROC_BUFSIZE - 1] = 0;
+    logdebug("%s\n", proc_buffer);
     return count;
 }
 
-int js_init_proc_entry(void)
+int js_proc_init(void)
 {
-    s_proc_buffer = kmalloc(JS_PROC_BUFSIZE, GFP_KERNEL);
-    if (!s_proc_buffer) {
+    proc_buffer = kmalloc(JS_PROC_BUFSIZE, GFP_KERNEL);
+    if (!proc_buffer) {
         goto error;
     }
 
-    s_proc_entry = create_proc_entry(JS_PROC_NAME, 0644, NULL);
-    if (!s_proc_entry) {
+    proc_entry = create_proc_entry(JS_PROC_NAME, 0644, NULL);
+    if (!proc_entry) {
         goto error;
     }
 
-    s_proc_entry->read_proc = js_proc_read;
-    s_proc_entry->write_proc = js_proc_write;
-    s_proc_entry->mode = S_IFREG | S_IRUGO;
-    s_proc_entry->uid = s_proc_entry->gid = 0;
+    proc_entry->read_proc = js_proc_read;
+    proc_entry->write_proc = js_proc_write;
+    proc_entry->mode = S_IFREG | S_IRUGO;
+    proc_entry->uid = proc_entry->gid = 0;
 
     return 0;
 
 error:
-    js_clear_proc_entry();
+    js_proc_clear();
     return -ENOMEM;
 }
 
-void js_clear_proc_entry(void)
+void js_proc_clear(void)
 {
-    if (s_proc_entry)
+    if (proc_entry)
     {
         remove_proc_entry(JS_PROC_NAME, NULL);
-        s_proc_entry = NULL;
+        proc_entry = NULL;
     }
-    if (s_proc_buffer)
+    if (proc_buffer)
     {
-        kfree(s_proc_buffer);
-        s_proc_buffer = NULL;
+        kfree(proc_buffer);
+        proc_buffer = NULL;
     }
 }
