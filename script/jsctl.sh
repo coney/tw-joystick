@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODULE=joystick
+MODULE=tw-joystick
 MODULE_FILE=${MODULE}.ko
 
 function load_driver {
