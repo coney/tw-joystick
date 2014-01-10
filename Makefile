@@ -1,5 +1,5 @@
 obj-m += tw-joystick.o
-tw-joystick-objs := joystick.o js_proc.o
+tw-joystick-objs := joystick.o js_proc.o js_dev.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
