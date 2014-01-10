@@ -4,6 +4,8 @@
 #include <linux/input.h>
 #include <linux/platform_device.h>
 #include <linux/module.h>
+#include "js_log.h"
+#include "js_proc.h"
 
 MODULE_AUTHOR("Coney Wu <kunwu@thoughtworks.com>");
 MODULE_LICENSE("GPL");
@@ -41,6 +43,8 @@ static struct attribute_group vms_attr_group = {
 /* Driver Initialization */ int __init
 joystick_init(void)
 {
+    loginfo("load joystick driver!\n");
+
     /* Register a platform device */
     vms_dev = platform_device_register_simple("vms", -1, NULL, 0);
     if (IS_ERR(vms_dev))
@@ -62,14 +66,21 @@ joystick_init(void)
     set_bit(REL_Y, vms_input_dev->relbit);
     /* Register with the input subsystem */
     input_register_device(vms_input_dev);
-    printk("Virtual Mouse Driver Initialized.\n");
+
+    js_init_proc_entry();
+
+    loginfo("joystick driver loaded!\n");
+
     return 0;
 }
 
 void __exit
 joystick_exit(void)
 {
-    printk("goodbye world!\n");
+    loginfo("unload joystick driver!\n");
+
+    js_clear_proc_entry();
+
     /* Unregister from the input subsystem */
     input_unregister_device(vms_input_dev);
 
@@ -81,6 +92,8 @@ joystick_exit(void)
 
     return;
 }
+
+
 
 module_init(joystick_init);
 module_exit(joystick_exit);
