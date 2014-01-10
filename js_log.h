@@ -17,5 +17,6 @@
 #define logdebug(fmt...)        writelog(KERN_DEBUG, fmt)
 #define loginfo(fmt...)         writelog(KERN_INFO, fmt)
 #define logerror(fmt...)        writelog(KERN_ERR, fmt)
+#define logwarn(fmt...)         writelog(KERN_WARNING, fmt)
 
 #endif // __JS_LOG_H__

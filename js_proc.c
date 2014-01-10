@@ -3,6 +3,7 @@
 #include <asm/uaccess.h>
 
 #include "js_log.h"
+#include "js_dev.h"
 #include "js_proc.h"
 
 static struct proc_dir_entry *proc_entry = NULL;
@@ -29,18 +30,26 @@ int js_proc_read(char *buffer, char **buffer_location, off_t offset, int buffer_
 
 int js_proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
 {
-    if (count > JS_PROC_BUFSIZE)
+    int button = 0;
+    logdebug("write %lu bytes\n", count);
+    if (count >= JS_PROC_BUFSIZE)
     {
-        count = JS_PROC_BUFSIZE;
+        count = JS_PROC_BUFSIZE - 1;
     }
 
-    /* write data to the buffer */
     if (copy_from_user(proc_buffer, buffer, count)) {
         return -EFAULT;
     }
 
-    proc_buffer[JS_PROC_BUFSIZE - 1] = 0;
-    logdebug("%s\n", proc_buffer);
+    proc_buffer[count] = 0;
+
+    logdebug("receive command %s\n", proc_buffer);
+    if (sscanf(proc_buffer, "%d", &button) == 1)
+    {
+        int ret = js_device_process(0, abs(button), !!(button > 0));
+        logdebug("process button %d, result=%d\n", button, ret);
+    }
+
     return count;
 }
 
