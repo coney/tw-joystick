@@ -1,0 +1,2 @@
+#!/bin/bash
+export KERNEL_SRC=/lib/modules/$(uname -r)/build
