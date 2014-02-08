@@ -22,7 +22,7 @@ static int js_proc_open(struct inode *inode, struct file *file) {
 
 static ssize_t js_proc_write(struct file *file, const char *buffer, size_t count, loff_t *offset) {
     int button = 0;
-    logdebug("write %lu bytes, offset %p\n", count, offset);
+    logdebug("write %zu bytes, offset %p\n", count, offset);
     if (count >= JS_PROC_BUFSIZE) {
         count = JS_PROC_BUFSIZE - 1;
     }
