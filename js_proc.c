@@ -1,51 +1,40 @@
 #include <linux/kernel.h>
 #include <linux/proc_fs.h>
+#include <linux/seq_file.h>
 #include <asm/uaccess.h>
+#include <linux/export.h>
 
 #include "js_log.h"
 #include "js_dev.h"
 #include "js_proc.h"
 
-static struct proc_dir_entry *proc_entry = NULL;
-static char *proc_buffer = NULL;
+static char js_proc_buffer[JS_PROC_BUFSIZE];
 
-int js_proc_read(char *buffer, char **buffer_location, off_t offset, int buffer_length, int *eof, void *data)
-{
-    int ret;
-
-    printk("procfile_read (/proc/%s) called\n", JS_PROC_NAME);
-
-    if (offset > 0) {
-        ret = 0;
-    }
-    else {
-        const char * hello = "Hello Kitty\n";
-        unsigned int len = strlen(hello);
-        memcpy(buffer, hello, len);
-        ret = len;
-    }
-
-    return ret;
+static int js_proc_show(struct seq_file *m, void *v) {
+    logdebug("proc read (/proc/%s) called\n", JS_PROC_NAME);
+    seq_printf(m, "Hello Kitty!\n");
+    return 0;
 }
 
-int js_proc_write(struct file *file, const char *buffer, unsigned long count, void *data)
-{
+static int js_proc_open(struct inode *inode, struct file *file) {
+    return single_open(file, js_proc_show, NULL);
+}
+
+static ssize_t js_proc_write(struct file *file, const char *buffer, size_t count, loff_t *offset) {
     int button = 0;
-    logdebug("write %lu bytes\n", count);
-    if (count >= JS_PROC_BUFSIZE)
-    {
+    logdebug("write %lu bytes, offset %p\n", count, offset);
+    if (count >= JS_PROC_BUFSIZE) {
         count = JS_PROC_BUFSIZE - 1;
     }
 
-    if (copy_from_user(proc_buffer, buffer, count)) {
+    if (copy_from_user(js_proc_buffer, buffer, count)) {
         return -EFAULT;
     }
 
-    proc_buffer[count] = 0;
+    js_proc_buffer[count] = 0;
 
-    logdebug("receive command %s\n", proc_buffer);
-    if (sscanf(proc_buffer, "%d", &button) == 1)
-    {
+    logdebug("receive command %s\n", js_proc_buffer);
+    if (sscanf(js_proc_buffer, "%d", &button) == 1) {
         int ret = js_device_process(0, abs(button), !!(button > 0));
         logdebug("process button %d, result=%d\n", button, ret);
     }
@@ -53,40 +42,23 @@ int js_proc_write(struct file *file, const char *buffer, unsigned long count, vo
     return count;
 }
 
-int js_proc_init(void)
-{
-    proc_buffer = kmalloc(JS_PROC_BUFSIZE, GFP_KERNEL);
-    if (!proc_buffer) {
-        goto error;
-    }
+static const struct file_operations js_proc_fops = {
+        .owner = THIS_MODULE,
+        .open = js_proc_open,
+        .read = seq_read,
+        .write  = js_proc_write,
+        .llseek = seq_lseek,
+        .release = single_release,
+};
 
-    proc_entry = create_proc_entry(JS_PROC_NAME, 0644, NULL);
-    if (!proc_entry) {
-        goto error;
+int js_proc_init(void) {
+    if (!proc_create(JS_PROC_NAME, S_IRUGO | S_IWUGO, NULL, &js_proc_fops)) {
+        return -ENOMEM;
     }
-
-    proc_entry->read_proc = js_proc_read;
-    proc_entry->write_proc = js_proc_write;
-    proc_entry->mode = S_IFREG | S_IRUGO;
-    proc_entry->uid = proc_entry->gid = 0;
 
     return 0;
-
-error:
-    js_proc_clear();
-    return -ENOMEM;
 }
 
-void js_proc_clear(void)
-{
-    if (proc_entry)
-    {
-        remove_proc_entry(JS_PROC_NAME, NULL);
-        proc_entry = NULL;
-    }
-    if (proc_buffer)
-    {
-        kfree(proc_buffer);
-        proc_buffer = NULL;
-    }
+void js_proc_clear(void) {
+    remove_proc_entry(JS_PROC_NAME, NULL);
 }
