@@ -12,3 +12,7 @@ Module.symvers
 *.suo
 *.sdf
 *.opensdf
+
+# IDEA Project Files
+.idea
+*.xcodeproj
