@@ -3,9 +3,12 @@
 #include "js_log.h"
 #include "js_proc.h"
 #include "js_dev.h"
+#include "js_input_gpio.h"
 
 MODULE_AUTHOR("Coney Wu <kunwu@thoughtworks.com>");
 MODULE_LICENSE("GPL");
+
+#define RASPI
 
 int __init joystick_init(void)
 {
@@ -22,10 +25,22 @@ int __init joystick_init(void)
         goto error;
     }
 
+#ifdef RASPI
+    if ((ret = js_input_gpio_init() != 0))
+    {
+        logerror("failed to init gpio!\n");
+        goto error;
+    }
+#endif // RASPI
+
     loginfo("joystick driver loaded!\n");
     return 0;
 
 error:
+#ifdef RASPI
+    js_input_gpio_clear();
+#endif // RASPI
+
     js_proc_clear();
     js_device_clear();
 
@@ -35,6 +50,10 @@ error:
 void __exit joystick_exit(void)
 {
     loginfo("unload joystick driver!\n");
+
+#ifdef RASPI
+    js_input_gpio_clear();
+#endif // RASPI
 
     js_proc_clear();
 
