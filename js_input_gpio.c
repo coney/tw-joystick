@@ -9,7 +9,7 @@
 
 typedef struct gpio_config
 {
-    unsigned int button_index;
+    unsigned int button;
     unsigned int gpio;
     unsigned int irq;
     struct timer_list timer;
@@ -36,8 +36,12 @@ static gpio_config_t g_gpio_configs[JS_MAX_INPUT_GPIO_COUNT];
 static void gpio_timer_callback(unsigned long data)
 {
     gpio_config_t *config = (gpio_config_t *)data;
+    int value = gpio_get_value(config->gpio);
+
     logdebug("index[%u] gpio[%02u]=%d\n",
-        config->button_index, config->gpio, gpio_get_value(config->gpio));
+        config->button, config->gpio, value);
+    
+    js_device_process(0, config->button, value);
 }
 
 static irqreturn_t gpio_irq_handler(int irq, void *data)
@@ -48,10 +52,13 @@ static irqreturn_t gpio_irq_handler(int irq, void *data)
 }
 
 static int setup_gpio_irq(gpio_config_t *config, unsigned int gpio,
-                          unsigned int button_index)
+                          unsigned int button)
 {
     BUG_ON(gpio == 0);
-    config->button_index = button_index;
+
+    gpio_direction_input(gpio);
+
+    config->button = button;
     config->gpio = gpio;
     config->irq = gpio_to_irq(gpio);
     snprintf(config->irq_name, sizeof(config->irq_name), "gpio%02u", gpio);
