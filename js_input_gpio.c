@@ -36,7 +36,7 @@ static gpio_config_t g_gpio_configs[JS_MAX_INPUT_GPIO_COUNT];
 static void gpio_timer_callback(unsigned long data)
 {
     gpio_config_t *config = (gpio_config_t *)data;
-    int value = gpio_get_value(config->gpio);
+    int value = !gpio_get_value(config->gpio);
 
     logdebug("index[%u] gpio[%02u]=%d\n",
         config->button, config->gpio, value);
