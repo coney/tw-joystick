@@ -5,6 +5,7 @@ modules.order
 *.mod.c
 .tmp_versions
 Module.symvers
+*.d
 
 # Visual Studio Project Files
 *.sln
@@ -16,3 +17,4 @@ Module.symvers
 # IDEA Project Files
 .idea
 *.xcodeproj
+
