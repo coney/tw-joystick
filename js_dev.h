@@ -18,8 +18,11 @@ enum {
     JSBTN_C,
     JSBTN_X,
     JSBTN_Y,
-    JSBTN_Z
+    JSBTN_Z,
+    JSBTN_COUNT
 };
+
+#define JS_PLAYER_COUNT 2
 
 #define JS_IS_DIRECTION(btn) ((btn) >= JSBTN_UP && (btn) <= JSBTN_RIGHT)
 #define JS_IS_BUTTON(btn) ((btn) >= JSBTN_A)

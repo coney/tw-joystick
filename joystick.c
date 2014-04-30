@@ -25,7 +25,7 @@ int __init joystick_init(void)
 
 #ifdef RASPI
     loginfo("initalizing gpio\n");
-    if ((ret = js_input_gpio_init() != 0))
+    if ((ret = js_input_gpio_init()) != 0)
     {
         logerror("failed to init gpio!\n");
         goto error;
