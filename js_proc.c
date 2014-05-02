@@ -21,7 +21,7 @@ static int js_proc_test_open(struct inode *inode, struct file *file) {
 }
 
 static ssize_t js_proc_test_write(struct file *file, const char *buffer, size_t count, loff_t *offset) {
-    int button = 0;
+    int button, player;
     logdebug("write %zu bytes, offset %p\n", count, offset);
     if (count >= JS_PROC_BUFSIZE) {
         count = JS_PROC_BUFSIZE - 1;
@@ -34,9 +34,9 @@ static ssize_t js_proc_test_write(struct file *file, const char *buffer, size_t 
     js_proc_buffer[count] = 0;
 
     logdebug("receive command %s\n", js_proc_buffer);
-    if (sscanf(js_proc_buffer, "%d", &button) == 1) {
-        int ret = js_device_process(0, abs(button), !!(button > 0));
-        logdebug("process button %d, result=%d\n", button, ret);
+    if (sscanf(js_proc_buffer, "%d %d", &player, &button) == 2) {
+        int ret = js_device_process(player, abs(button), !!(button > 0));
+        logdebug("process player:%d button %d, result=%d\n", player, button, ret);
     }
 
     return count;

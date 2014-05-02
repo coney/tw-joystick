@@ -36,6 +36,6 @@ void js_device_clear(void);
   * @param INPUT button button value
   * @return 
   */
-int js_device_process(int id, int button, int value);
+int js_device_process(int player, int button, int value);
 
 #endif // __JS_DEV_H__
