@@ -1,6 +1,7 @@
 #include <linux/gpio.h>
 #include <linux/irq.h>
 #include <linux/interrupt.h>
+#include <linux/moduleparam.h>
 #include "js_log.h"
 #include "js_input_gpio.h"
 #include "js_dev.h"
@@ -9,19 +10,15 @@
 
 typedef struct gpio_config
 {
+    unsigned int player;
     unsigned int button;
     unsigned int gpio;
     unsigned int irq;
     struct timer_list timer;
     char irq_name[16];
 } gpio_config_t;
+static gpio_config_t g_gpio_configs[JS_MAX_INPUT_GPIO_COUNT];
 
-
-struct {
-    unsigned int player;
-    unsigned int gpio;
-    unsigned int button;
-} g_gpio_mapping[JS_PLAYER_COUNT][JSBTN_COUNT];
 
 /**************************************************************************
 +----------+-Rev2-+------+--------+------+-------+
@@ -51,9 +48,8 @@ struct {
 +----------+------+------+--------+------+-------+
 ***************************************************************************/
 
-static gpio_config_t g_gpio_configs[JS_MAX_INPUT_GPIO_COUNT];
-static const char *key_mapping = "(7,11,8,9,25,10,24,22),(17,18,27,23,28,29,30,31)";
-module_param(key_mapping, charp, S_IRUGO);
+static char *key_mapping = "(7,11,8,9,25,10,24,22),(17,18,27,23,28,29,30,31)";
+module_param(key_mapping, charp, 0644);
 
 static void gpio_timer_callback(unsigned long data)
 {
@@ -63,7 +59,7 @@ static void gpio_timer_callback(unsigned long data)
     logdebug("index[%u] gpio[%02u]=%d\n",
         config->button, config->gpio, value);
     
-    js_device_process(0, config->button, value);
+    js_device_process(config->player, config->button, value);
 }
 
 static irqreturn_t gpio_irq_handler(int irq, void *data)
@@ -73,15 +69,12 @@ static irqreturn_t gpio_irq_handler(int irq, void *data)
     return IRQ_HANDLED;
 }
 
-static int setup_gpio_irq(gpio_config_t *config, unsigned int gpio,
-                          unsigned int button)
+static int setup_gpio_irq(gpio_config_t *config)
 {
+    unsigned int gpio = config->gpio;
     BUG_ON(gpio == 0);
 
     gpio_direction_input(gpio);
-
-    config->button = button;
-    config->gpio = gpio;
     config->irq = gpio_to_irq(gpio);
     snprintf(config->irq_name, sizeof(config->irq_name), "gpio%02u", gpio);
 
@@ -92,19 +85,19 @@ static int setup_gpio_irq(gpio_config_t *config, unsigned int gpio,
     return request_irq(config->irq, gpio_irq_handler, 
         IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
         config->irq_name, config);
+    return 0;
 }
 
 static void free_gpio_irq(gpio_config_t *config)
 {
-    // pass uninitialized gpio config
-    if (config->gpio)
-    {
+    BUG_ON(config->gpio == 0);
+    del_timer(&config->timer);
+    if (config->irq) {
         free_irq(config->irq, config);
-        del_timer(&config->timer);
     }
 }
 
-static int parse_gpio_mapping(const char *mapping) {
+static int setup_gpio_config(const char *mapping, gpio_config_t *config) {
     // ugly but easy and robust
     unsigned int gpios[16] = {0};
     int count = sscanf(mapping, 
@@ -122,11 +115,17 @@ static int parse_gpio_mapping(const char *mapping) {
     unsigned int index = 0;
     for (unsigned int player = 0; player < 2; ++player) {
         for (unsigned int btn = JSBTN_UP; btn <= JSBTN_X; ++btn) {
-            g_gpio_mapping[player][btn].player = player;
-            g_gpio_mapping[player][btn].button = btn;
-            g_gpio_mapping[player][btn].gpio = gpios[index++];
+            unsigned int gpio = gpios[index++];
+            // skip some key configs
+            if (gpio) {
+                config->player = player;
+                config->button = btn;
+                config->gpio = gpio;
+                logdebug("setup player:%u button:%u gpio:%u\n",
+                    config->player, config->button, config->gpio);
+                ++config;
+            }
         }
-        
     }
 
     return 0;
@@ -135,45 +134,45 @@ static int parse_gpio_mapping(const char *mapping) {
 int js_input_gpio_init( void )
 {
     int ret;
-    unsigned int i;
-
-    //BUG_ON(ARRAY_SIZE(g_gpio_mapping) > JS_MAX_INPUT_GPIO_COUNT);
 
     memset(g_gpio_configs, 0, sizeof(g_gpio_configs));
-    memset(g_gpio_mapping, 0, sizeof(g_gpio_mapping));
 
-    if ((ret = parse_gpio_mapping(key_mapping))) {
+    if ((ret = setup_gpio_config(key_mapping, g_gpio_configs))) {
         logerror("invalid key mapping '%s'\n", key_mapping);
         return ret;
     }
-    
-    return -EINVAL;
 
-    //for (i = 0; i < ARRAY_SIZE(g_gpio_mapping); ++i)
-    //{
-    //    gpio_config_t *config = g_gpio_configs +i;
 
-    //    if ((ret = setup_gpio_irq(config, 
-    //        g_gpio_mapping[i].gpio,
-    //        g_gpio_mapping[i].button)))
-    //    {
-    //        logerror("setup gpio[%u] failed!err=%d\n",
-    //            g_gpio_mapping[i].gpio, ret);
-    //        js_input_gpio_clear();
-    //        return ret;
-    //    }
-    //    logdebug("setup gpio[%02u] irq[%u]\n", config->gpio, config->irq);
-    //}
+    for (unsigned int i = 0; i < JS_MAX_INPUT_GPIO_COUNT; ++i) {
+        gpio_config_t *config = g_gpio_configs + i;
+        if (!config->gpio) {
+            break;
+        }
 
+        if ((ret = setup_gpio_irq(config))) {
+            logerror("setup gpio[%u] failed! err=%d\n", config->gpio, ret);
+            goto error;
+        }
+        logdebug("setup gpio[%u] irq[%u]\n", config->gpio, config->irq);
+    }
+     
     return 0;
+
+error:
+    js_input_gpio_clear();
+    return ret;
 }
 
 void js_input_gpio_clear( void )
 {
     unsigned int i;
-    for (i = 0; i < ARRAY_SIZE(g_gpio_mapping); ++i)
+    for (i = 0; i < JS_MAX_INPUT_GPIO_COUNT; ++i)
     {
-        free_gpio_irq(g_gpio_configs + i);
+        gpio_config_t *config = g_gpio_configs + i;
+        if (!config->gpio) {
+            break;
+        }
+        free_gpio_irq(config);
     }
 
     synchronize_rcu();

@@ -5,7 +5,7 @@ MODULE_FILE=${MODULE}.ko
 
 function load_driver {
     # temporarily setup gpio mode to pull down by gpio utility
-    for ((i=0;i<=20;i++)); do gpio mode $i down;done
+    # for ((i=0;i<=20;i++)); do gpio mode $i up;done
     insmod $MODULE_FILE
 }
 
