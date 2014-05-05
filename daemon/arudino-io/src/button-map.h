@@ -11,7 +11,7 @@ public:
     }
 
     void updateMap(unsigned int pin, unsigned int button) {
-        printf("update %u => %u\r\n", pin, button);
+        //printf("update %u => %u\r\n", pin, button);
         button_to_pin_map[button] = pin;
         pin_to_button_map[pin] = button;
     }

@@ -28,7 +28,7 @@ public:
                 callback(btn, status == LOW);
             }
         }
-        delay(5);
+        delay(interval_ms);
     }
 
 private:
