@@ -6,6 +6,10 @@
 #include "button-map.h"
 #include "button-event-source.h"
 
+#include "arduino-serial-source.h"
+#include "smessage.h"
+#include "button-event.h"
+
 class Application {
 public:
     static Application *getInstance() {
@@ -24,13 +28,24 @@ public:
 
 private:
     Application() {
+        smessage = new SMessage(new SerialSource(&serial));
         button_map = new ButtonMap();
         event_source = new ButtonEventSource(button_map, eventCallback);
     }
 
 
     void onButtonEvent(unsigned int button, bool pressed) {
-        printf("button[%u] => %u\r\n", button, pressed);
+        //printf("button[%u] => %u\r\n", button, pressed);
+        ButtonEvent event;
+        event.button = button;
+        event.pressed = !!pressed;
+
+#ifdef DEBUG
+        event.button += 'a';
+        event.pressed += '0';
+#endif // DEBUG
+
+        smessage->send(ButtonEventMessageId, event);
     }
 
     static void eventCallback(unsigned int button, bool pressed) {
@@ -56,8 +71,9 @@ private:
         }
     }
 
-    ButtonMap *button_map;
-    ButtonEventSource *event_source;
+    ButtonMap           *button_map;
+    ButtonEventSource   *event_source;
+    SMessage            *smessage;
 };
 
 #endif // APPLICATION_H__
