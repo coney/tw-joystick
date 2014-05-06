@@ -5,6 +5,7 @@
 #include <linux/export.h>
 
 #include "js_log.h"
+#include "js_button.h"
 #include "js_dev.h"
 #include "js_proc.h"
 

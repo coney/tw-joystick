@@ -4,6 +4,7 @@
 #include <linux/moduleparam.h>
 #include "js_log.h"
 #include "js_input_gpio.h"
+#include "js_button.h"
 #include "js_dev.h"
 
 #define JS_MAX_INPUT_GPIO_COUNT (JS_PLAYER_COUNT * JSBTN_COUNT)

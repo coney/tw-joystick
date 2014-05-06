@@ -3,6 +3,7 @@
 #include <linux/platform_device.h>
 
 #include "js_log.h"
+#include "js_button.h"
 #include "js_dev.h"
 
 static struct input_dev *js_input_dev[JS_PLAYER_COUNT];
