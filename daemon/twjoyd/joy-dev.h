@@ -11,9 +11,7 @@ public:
     JoyDevice (const char *device_path);
     virtual ~JoyDevice();
 
-    const DriverButton *mapButton(ArduinoButton button) const;
-    int loadKeyMap();
-    int updateButtonStatus(unsigned int button, bool pressed);
+    int updateButtonStatus(unsigned int player, unsigned int button, bool pressed);
 private:
     std::map<ArduinoButton, DriverButton>            button_map;
     FILE                                            *device_file;

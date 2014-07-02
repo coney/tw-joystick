@@ -8,30 +8,22 @@ using namespace std;
 
 #define LOGPREFIX   "[joydev]"
 
-int JoyDevice::updateButtonStatus( unsigned int arduino_button, bool pressed )
+int JoyDevice::updateButtonStatus( unsigned int player, 
+                                  unsigned int button, 
+                                  bool pressed )
 {
     if (!device_file) {
         logerror(LOGPREFIX "open device file failed");
         return -EIO;
     }
-    const DriverButton *button = mapButton(arduino_button);
-    if (button) {
-        unsigned int player = button->first;
-        int key = button->second;
-        if (!pressed) {
-            // above zero is pressed, below zero is released
-            key = -key;
-        }
 
-        logtrace(LOGPREFIX "button:%u pressed:%u player:%u key:%d",
-            arduino_button, pressed, player, key);
-        fprintf(device_file, "%u %d", player, key);
-        fflush(device_file);
-    }
-    else {
-        logwarn(LOGPREFIX "unmapped arduino button %u", arduino_button);
-        return -EINVAL;
-    }
+    int key = pressed ? button : -button;
+
+    logtrace(LOGPREFIX "button:%u pressed:%u player:%u key:%d",
+        button, pressed, player, key);
+    fprintf(device_file, "%u %d", player, key);
+    fflush(device_file);
+
 
     return 0;
 }
@@ -47,24 +39,4 @@ JoyDevice::~JoyDevice()
 JoyDevice::JoyDevice( const char *device_path )
 {
     device_file = fopen(device_path, "w");
-}
-
-int JoyDevice::loadKeyMap()
-{
-    unsigned int arudino_button = 0;
-    for (unsigned int player = 0; player < JS_PLAYER_COUNT; ++player) {
-        for (unsigned int button = JSBTN_UP; button <= JSBTN_X; ++button) {
-            button_map[arudino_button] = make_pair(player, button);
-            //logtrace("add key map arduino[%u] -> player[%u] button[%u]",
-            //    arudino_button, player, button);
-            ++arudino_button;
-        }
-    }
-    return 0;
-}
-
-const JoyDevice::DriverButton * JoyDevice::mapButton( ArduinoButton button ) const
-{
-    map<ArduinoButton, DriverButton>::const_iterator it = button_map.find(button);
-    return it == button_map.end() ? NULL : &it->second;
 }

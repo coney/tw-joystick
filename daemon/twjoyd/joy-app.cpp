@@ -32,7 +32,8 @@ int JoyApp::main( const std::vector < std::string > & args )
         //    event ? event->button : -1,
         //    event ? event->pressed : -1);
         if (event) {
-            joydev->updateButtonStatus(event->button, event->pressed);
+            joydev->updateButtonStatus(event->player, 
+                event->button, event->pressed);
         }
     }, m_joydev);
 
@@ -127,7 +128,7 @@ bool JoyApp::setupSerial()
 bool JoyApp::setupJoyDevice()
 {
     m_joydev = new JoyDevice(m_joy_device_path.c_str());
-    return m_joydev->loadKeyMap() == 0;
+    return true;
 }
 
 
