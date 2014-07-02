@@ -58,8 +58,8 @@ static struct proc_dir_entry *js_proc_root = NULL;
 
 int js_proc_init(void) {
 
-    if ((js_proc_root = proc_mkdir_mode(JS_PROC_NAME, S_IRUGO | S_IWUGO, NULL)) == NULL
-        || !proc_create(JS_PROC_TEST, S_IRUGO | S_IWUGO, js_proc_root, &js_proc_config_fops)) {
+    if ((js_proc_root = proc_mkdir_mode(JS_PROC_NAME, S_IALLUGO, NULL)) == NULL
+        || !proc_create(JS_PROC_TEST, S_IALLUGO, js_proc_root, &js_proc_config_fops)) {
             js_proc_clear();
             return -ENOMEM;
     }

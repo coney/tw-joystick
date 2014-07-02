@@ -2,8 +2,9 @@
 
 PROCFILE=/proc/twjoystick/test
 PLAYERS=2
-BUTTONS=8
-INTERVAL=0.2
+# 4 directions + ABCXYZ
+BUTTONS=10
+INTERVAL=0.1
 
 for ((p=0;p<$PLAYERS;p++)); do
     for((i=1;i<=$BUTTONS;i++)); do

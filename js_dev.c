@@ -38,8 +38,8 @@ static void js_device_register_capability(struct input_dev *dev)
     set_bit(BTN_B, dev->keybit);
     set_bit(BTN_C, dev->keybit);
     set_bit(BTN_X, dev->keybit);
-    //set_bit(BTN_Y, dev->keybit);
-    //set_bit(BTN_Z, dev->keybit);
+    set_bit(BTN_Y, dev->keybit);
+    set_bit(BTN_Z, dev->keybit);
     //set_bit(BTN_TL, dev->keybit);
     //set_bit(BTN_TR, dev->keybit);
 
