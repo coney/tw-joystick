@@ -15,6 +15,11 @@ RUNAS=root
 
 PIDFILE=/var/run/${NAME}.pid
 LOGFILE=/var/log/${NAME}.log
+MODULE_PATH="/lib/modules/`uname -r`/kernel/drivers/input/joystick/tw-joystick.ko"
+
+load_module() {
+    insmod $MODULE_PATH
+}
 
 start() {
   if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
@@ -22,8 +27,12 @@ start() {
     return 1
   fi
   echo 'Starting service…' >&2
+  
+  load_module
+  
   touch $LOGFILE
   chmod a+r $LOGFILE
+  
   local CMD="$SCRIPT --daemon --pidfile=$PIDFILE --logfile=$LOGFILE & echo \$!"
   su -c "$CMD" $RUNAS
   echo 'Service started' >&2

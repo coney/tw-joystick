@@ -2,7 +2,7 @@
 
 MODULE=tw-joystick
 MODULE_FILE=${MODULE}.ko
-DSTPATH="/lib/modules/`uname -r`/kernel/drivers/input/joystick/"
+MODULE_PATH="/lib/modules/`uname -r`/kernel/drivers/input/joystick/"
 
 function load_driver {
     # temporarily setup gpio mode to pull down by gpio utility
@@ -20,8 +20,8 @@ function reload_driver {
 }
 
 function install_driver {
-    mkdir -p $DSTPATH
-    cp -f $MODULE_FILE $DSTPATH
+    mkdir -p $MODULE_PATH
+    cp -f $MODULE_FILE $MODULE_PATH
 }
 
 
@@ -39,6 +39,6 @@ case $1 in
         echo "reloading $MODULE"
         reload_driver;;
     install)
-        echo "installing $MODULE into $DSTPATH"
+        echo "installing $MODULE into $MODULE_PATH"
         install_driver;;
 esac
