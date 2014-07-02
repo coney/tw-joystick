@@ -22,6 +22,8 @@ start() {
     return 1
   fi
   echo 'Starting service…' >&2
+  touch $LOGFILE
+  chmod a+r $LOGFILE
   local CMD="$SCRIPT --daemon --pidfile=$PIDFILE --logfile=$LOGFILE & echo \$!"
   su -c "$CMD" $RUNAS
   echo 'Service started' >&2
