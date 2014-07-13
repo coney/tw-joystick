@@ -86,7 +86,6 @@ static int setup_gpio_irq(gpio_config_t *config)
     return request_irq(config->irq, gpio_irq_handler, 
         IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
         config->irq_name, config);
-    return 0;
 }
 
 static void free_gpio_irq(gpio_config_t *config)
